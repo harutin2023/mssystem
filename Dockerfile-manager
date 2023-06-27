@@ -2,7 +2,7 @@ RUN apt-get update && \
     apt-get install -y \
       npm  \ git
 
-RUN git clone https://github.com/Harutin1991/temperature-measurement-system-front.git manager \
+RUN git clone https://github.com/harutin2023/msfront.git manager \
     npm install \
     cd manager \
     npm run dev
