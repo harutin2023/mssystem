@@ -1,0 +1,15 @@
+version: '3'
+services:
+  core-fpm:
+    image: adaptdk/php:7.2-fpm-composer-with-redis-opcode-xdebug
+    volumes:
+      - ./xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    environment:
+      - PHP_IDE_CONFIG=serverName=core
+
+  florist-fpm:
+    image: adaptdk/php:7.2-fpm-composer-with-redis-opcode-xdebug
+    volumes:
+      - ./xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    environment:
+      - PHP_IDE_CONFIG=serverName=manager

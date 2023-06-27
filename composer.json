@@ -1,0 +1,23 @@
+{
+    "type": "project",
+    "license": "proprietary",
+    "config": {
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ipos\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "codeception/codeception": "^2.4",
+        "phpunit/phpunit": "^6.0",
+        "phpunit/phpunit-selenium": "^4.1"
+    },
+    "require": {
+        "vlucas/phpdotenv": "^2.4"
+    }
+}

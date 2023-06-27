@@ -1,0 +1,39 @@
+FROM php:7.1-fpm
+
+RUN apt-get update && \
+    apt-get install -y \
+      libpq-dev \
+      libicu-dev  \
+      zip \
+      unzip \
+      netcat \
+      libpng-dev \
+      git && \
+    docker-php-ext-install \
+        opcache \
+        pdo \
+        pdo_pgsql \
+        pdo_mysql \
+        pgsql \
+        sockets \
+        bcmath \
+	zip \
+    	gd \
+        intl && \
+    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+    pecl install xdebug
+COPY ./xdebug.ini /usr/local/etc/php/conf.d/ 
+
+# Make xdebug config only readable by root, so when executing php cli with www-data as user it will not be enabled.
+RUN chmod go-r /usr/local/etc/php/conf.d/xdebug.ini
+RUN pecl install -o -f redis \
+    &&  rm -rf /tmp/pear \
+    &&  docker-php-ext-enable redis
+
+RUN mkdir /var/www/.composer \
+    && chown www-data:www-data /var/www/.composer \
+
+RUN git clone https://github.com/Harutin1991/temperature-measurement-system-backend.git  core \
+    composer install \
+    cd core \
+    php -S localhost:8080 -t public public/index.php

@@ -1,0 +1,88 @@
+version: '3'
+services:
+  traefik:
+    image: traefik:1.7
+    command: -c /dev/null --web --docker --logLevel=INFO
+    container_name: traefik
+    ports:
+      - '80:80'
+      - '8080:8080' # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  redis:
+    image: redis
+  database:
+    image: wodby/mariadb:10.2-3.1.3
+    container_name: database
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: db_password
+      MYSQL_DATABASE: db_name
+      MYSQL_ROOT_PASSWORD: sup3rp4ss
+  queue:
+    image: rabbitmq:3-management
+    container_name: queue
+    ports:
+      - 15672:15672
+      - 5672:5672
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: queue
+    labels:
+      - traefik.backend=queue
+      - traefik.frontend.rule=Host:queue.tms.localhost
+      - traefik.port=15672
+
+  # manager, showing interface to allow add sensors
+  manager:
+    image: adaptdk/nginx-rm-default
+    depends_on:
+      - manager-fpm
+    volumes:
+      - ./manager:/public:cached
+      - ./manager/site.conf:/etc/nginx/conf.d/site.conf
+    extra_hosts:
+      - "manager.tms.local:127.0.0.1"
+    links:
+      - manager-fpm:public
+    labels:
+      - traefik.backend=manager
+      - traefik.frontend.rule=Host:manager.tms.local
+      - traefik.port=80
+  manager-fpm:
+    image: adaptdk/php:7.4-fpm-composer-with-redis-no-opcode
+    container_name: manager
+    depends_on:
+      - database
+    volumes:
+      - ./manager:/public:cached
+    working_dir: /
+    command: git clone https://github.com/Harutin1991/temperature-measurement-system-front.git manager; npm install; npm dev
+
+# Core, sending data from sensors to system
+  core:
+    image: adaptdk/nginx-rm-default
+    volumes:
+      - ./core:/app:cached
+      - ./core/site.conf:/etc/nginx/conf.d/site.conf
+    extra_hosts:
+      - "core.tms.local:127.0.0.1"
+    links:
+      - core-fpm:app
+    labels:
+      - traefik.backend=core
+      - traefik.frontend.rule=Host:core.tms.local
+      - traefik.port=80
+  core-fpm:
+    image: adaptdk/php:7.4-fpm-composer-with-redis-no-opcode
+    container_name: core
+    depends_on:
+      - database
+    volumes:
+      - ./core:/app:cached
+    working_dir: /public
+    command: git clone https://github.com/Harutin1991/temperature-measurement-system-backend.git  core; composer install; cd core; php -S localhost:8082 -t public public/index.php
