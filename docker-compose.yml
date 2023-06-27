@@ -44,7 +44,6 @@ services:
       - manager-fpm
     volumes:
       - ./manager:/public:cached
-      - ./manager/site.conf:/etc/nginx/conf.d/site.conf
     extra_hosts:
       - "manager.tms.local:127.0.0.1"
     links:
@@ -61,13 +60,13 @@ services:
     volumes:
       - ./manager:/public:cached
     working_dir: /
+    command: npm install --production
 
 # Core, sending data from sensors to system
   core:
     image: adaptdk/nginx-rm-default
     volumes:
       - ./core:/app:cached
-      - ./core/site.conf:/etc/nginx/conf.d/site.conf
     extra_hosts:
       - "core.tms.local:127.0.0.1"
     links:
@@ -84,3 +83,4 @@ services:
     volumes:
       - ./core:/app:cached
     working_dir: /public
+    command: php -S localhost:8082 -t public public/index.php
